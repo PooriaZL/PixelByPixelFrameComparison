@@ -1,0 +1,14 @@
+D:\Source\PixelByPixelFrameComparison\bin\Debug\net9.0\PixelByPixelFrameComparison.exe
+D:\Source\PixelByPixelFrameComparison\bin\Debug\net9.0\PixelByPixelFrameComparison.deps.json
+D:\Source\PixelByPixelFrameComparison\bin\Debug\net9.0\PixelByPixelFrameComparison.runtimeconfig.json
+D:\Source\PixelByPixelFrameComparison\bin\Debug\net9.0\PixelByPixelFrameComparison.dll
+D:\Source\PixelByPixelFrameComparison\bin\Debug\net9.0\PixelByPixelFrameComparison.pdb
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.GeneratedMSBuildEditorConfig.editorconfig
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.AssemblyInfoInputs.cache
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.AssemblyInfo.cs
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.csproj.CoreCompileInputs.cache
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.dll
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\refint\PixelByPixelFrameComparison.dll
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.pdb
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.genruntimeconfig.cache
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\ref\PixelByPixelFrameComparison.dll
