@@ -12,3 +12,4 @@ D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\refint\PixelByPixelFrameC
 D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.pdb
 D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.genruntimeconfig.cache
 D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\ref\PixelByPixelFrameComparison.dll
+D:\Source\PixelByPixelFrameComparison\obj\Debug\net9.0\PixelByPixelFrameComparison.sourcelink.json

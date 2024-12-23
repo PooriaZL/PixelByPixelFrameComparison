@@ -1,4 +1,6 @@
-﻿namespace SomeNameSpace
+﻿using System.Globalization;
+
+namespace SomeNameSpace
 {
     public static class VideoComparer
     {
@@ -7,8 +9,14 @@
             List<double> frameDiffs = new List<double>();
             var firstYUVFrame = ReadYUVFrame(yuvFilePath, width, height, 1);
 
+            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
             for (int i = 1; i <= 511; i++)
             {
+                TimeSpan timeSpan = TimeSpan.FromSeconds(Convert.ToInt32(stopwatch.Elapsed.TotalSeconds));
+                Console.Write(timeSpan.ToString("c"));
+                Console.Write('\r');
+                
                 var tsFrame = DecodeTsFrame(tsFilePath, width, height, frameRate, i);
 
                 if (firstYUVFrame.Length != tsFrame.Length)
@@ -19,7 +27,7 @@
                 double difference = CalculateFrameDifference(firstYUVFrame, tsFrame);
                 frameDiffs.Add(difference);
             }
-
+            Console.WriteLine("\n");
             Console.WriteLine($"Frame offset to sync: {frameDiffs.IndexOf(frameDiffs.Min())}");
         }
 
@@ -57,8 +65,11 @@
             int uvSize = (width / 2) * (height / 2);
             int frameSize = ySize + 2 * uvSize;
 
-            // FFmpeg command to extract a single frame in rawvideo format
-            string arguments = $"-i \"{tsFilePath}\" -vf \"select=eq(n\\,{frameIndex})\" -vsync vfr -f rawvideo -";
+            // OLd argument with bad performance
+            //string arguments = $"-i \"{tsFilePath}\" -vf \"select=eq(n\\,{frameIndex})\" -vsync vfr -f rawvideo -";
+
+            double timestamp = frameIndex / frameRate;
+            string arguments = $" -i \"{tsFilePath}\" -ss {timestamp.ToString(CultureInfo.InvariantCulture)} -frames:v 1 -f rawvideo -";
 
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo
             {
