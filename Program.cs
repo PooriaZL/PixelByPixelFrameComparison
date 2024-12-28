@@ -4,29 +4,71 @@ namespace SomeNameSpace
 {
     public static class VideoComparer
     {
-        public static void CompareVideos(string yuvFilePath, string tsFilePath, int width, int height, double frameRate)
+        public static async Task CompareVideos(string yuvFilePath, string tsFilePath, int width, int height, double frameRate)
         {
             List<double> frameDiffs = new List<double>();
             var firstYUVFrame = ReadYUVFrame(yuvFilePath, width, height, 1);
 
-            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-            stopwatch.Start();
-            for (int i = 1; i <= 511; i++)
+            //System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            //stopwatch.Start();
+
+            string ffmpegPath = @"D:\ffmpeg\bin\ffmpeg.exe"; 
+            int maxConcurrency = 8;
+            using (var semaphore = new SemaphoreSlim(maxConcurrency))
             {
-                TimeSpan timeSpan = TimeSpan.FromSeconds(Convert.ToInt32(stopwatch.Elapsed.TotalSeconds));
-                Console.Write(timeSpan.ToString("c"));
-                Console.Write('\r');
-                
-                var tsFrame = DecodeTsFrame(tsFilePath, width, height, frameRate, i);
-
-                if (firstYUVFrame.Length != tsFrame.Length)
+                var ffmpegTasks = new List<Task>();
+                for (int i = 1; i <= 511; i++)
                 {
-                    tsFrame = ResizeFrame(tsFrame, width, height);
-                }
+                    var timestamp = i / frameRate;
+                    var argument = $"-i \"{tsFilePath}\" -ss {timestamp.ToString(CultureInfo.InvariantCulture)} -frames:v 1 -f rawvideo -";
+                    await semaphore.WaitAsync();
+                    var task = RunFFmpegAsync(ffmpegPath, argument, firstYUVFrame, width, height)
+                        .ContinueWith(t =>
+                        {
+                            if (t.Status == TaskStatus.RanToCompletion)
+                            {
+                                lock (frameDiffs)
+                                {
+                                    frameDiffs.Add(t.Result);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Error: {t.Exception?.Flatten().Message}");
+                                lock (frameDiffs)
+                                {
+                                    frameDiffs.Add(double.MaxValue); // Add a high difference for failed frames
+                                }
+                            }
 
-                double difference = CalculateFrameDifference(firstYUVFrame, tsFrame);
-                frameDiffs.Add(difference);
-            }
+                            semaphore.Release();
+                        });
+                    ffmpegTasks.Add(task);
+                }
+                await Task.WhenAll(ffmpegTasks); 
+            }        
+            
+  
+            // var differences = await Task.WhenAll(ffmpegTasks);
+            // frameDiffs.AddRange(differences);
+
+
+            // for (int i = 1; i <= 511; i++)
+            // {
+            //     TimeSpan timeSpan = TimeSpan.FromSeconds(Convert.ToInt32(stopwatch.Elapsed.TotalSeconds));
+            //     Console.Write(timeSpan.ToString("c"));
+            //     Console.Write('\r');
+                
+            //     var tsFrame = DecodeTsFrame(tsFilePath, width, height, frameRate, i);
+
+            //     if (firstYUVFrame.Length != tsFrame.Length)
+            //     {
+            //         tsFrame = ResizeFrame(tsFrame, width, height);
+            //     }
+
+            //     double difference = CalculateFrameDifference(firstYUVFrame, tsFrame);
+            //     frameDiffs.Add(difference);
+            // }
             Console.WriteLine("\n");
             Console.WriteLine($"Frame offset to sync: {frameDiffs.IndexOf(frameDiffs.Min())}");
         }
@@ -55,10 +97,47 @@ namespace SomeNameSpace
 
             return frameData;
         }
+        private static async Task<double> RunFFmpegAsync(string ffmpegPath, string arguments, byte[] referenceFrame, int width, int height)
+        {
+            try
+            {
+                using (var ffmpegProcess = new System.Diagnostics.Process())
+                {
+                    ffmpegProcess.StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = ffmpegPath,
+                        Arguments = arguments,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
 
+                    ffmpegProcess.Start();
+
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await ffmpegProcess.StandardOutput.BaseStream.CopyToAsync(memoryStream);
+                        await ffmpegProcess.WaitForExitAsync();
+                        if (ffmpegProcess.ExitCode != 0)
+                        {
+                            var error = await ffmpegProcess.StandardError.ReadToEndAsync();
+                            Console.WriteLine($"FFmpeg failed with error: {error}");
+                        }
+
+                        return CalculateFrameDifference(referenceFrame, memoryStream.ToArray());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during FFmpeg execution: {ex.Message}");
+                return double.MaxValue;
+            }
+        }
         private static byte[] DecodeTsFrame(string tsFilePath, int width, int height, double frameRate, int frameIndex = 0)
         {
-            string ffmpegPath = @"D:\ffmpeg\bin\ffmpeg.exe"; // Path to the ffmpeg executable
+            string ffmpegPath = @"D:\ffmpeg\bin\ffmpeg.exe";
 
             // Calculate the expected frame size (assuming YUV420p format)
             int ySize = width * height;
@@ -149,14 +228,14 @@ namespace SomeNameSpace
 
     public class MyClass
     {
-        public static void Main()
+        public static async Task Main()
         {
             string yuvFilePath = @"D:\Raw.yuv";
             string tsFilePath = @"D:\video.ts";
             int width = 1920; 
             int height = 1080; 
             double frameRate = 25; 
-            VideoComparer.CompareVideos(yuvFilePath, tsFilePath, width, height, frameRate);
+            await VideoComparer.CompareVideos(yuvFilePath, tsFilePath, width, height, frameRate);
             Console.ReadKey();
         }
     }
