@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj": {}
+    "d:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj": {}
   },
   "projects": {
-    "D:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj": {
+    "d:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj",
+        "projectUniqueName": "d:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj",
         "projectName": "PixelByPixelFrameComparison",
-        "projectPath": "D:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj",
+        "projectPath": "d:\\Source\\PixelByPixelFrameComparison\\PixelByPixelFrameComparison.csproj",
         "packagesPath": "C:\\Users\\poriya_zolfaghari\\.nuget\\packages\\",
-        "outputPath": "D:\\Source\\PixelByPixelFrameComparison\\obj\\",
+        "outputPath": "d:\\Source\\PixelByPixelFrameComparison\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\poriya_zolfaghari\\AppData\\Roaming\\NuGet\\NuGet.Config"

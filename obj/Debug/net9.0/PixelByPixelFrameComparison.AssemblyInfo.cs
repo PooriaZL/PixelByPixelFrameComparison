@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PixelByPixelFrameComparison")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b817ce94b1749bf48b6ccf57b30bc21f06f3e524")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d18be6b5bb0f904e036873bb7b5411642d1cbeba")]
 [assembly: System.Reflection.AssemblyProductAttribute("PixelByPixelFrameComparison")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PixelByPixelFrameComparison")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,76 +1,34 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
+using System.Reflection.Metadata;
 
-namespace SomeNameSpace
+namespace PixelByPixelFrameComparison
 {
     public static class VideoComparer
     {
+        private const int maxConcurrency = 5;
+        private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(maxConcurrency);
         public static async Task CompareVideos(string yuvFilePath, string tsFilePath, int width, int height, double frameRate)
         {
-            List<double> frameDiffs = new List<double>();
+            var frameDiffs = new Dictionary<int,double>();  
             var firstYUVFrame = ReadYUVFrame(yuvFilePath, width, height, 1);
 
             //System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
             //stopwatch.Start();
 
             string ffmpegPath = @"D:\ffmpeg\bin\ffmpeg.exe"; 
-            int maxConcurrency = 8;
-            using (var semaphore = new SemaphoreSlim(maxConcurrency))
+            var ffmpegTasks = new List<Task>();
+            for (int i = 1; i <= 511; i++)
             {
-                var ffmpegTasks = new List<Task>();
-                for (int i = 1; i <= 511; i++)
-                {
-                    var timestamp = i / frameRate;
-                    var argument = $"-i \"{tsFilePath}\" -ss {timestamp.ToString(CultureInfo.InvariantCulture)} -frames:v 1 -f rawvideo -";
-                    await semaphore.WaitAsync();
-                    var task = RunFFmpegAsync(ffmpegPath, argument, firstYUVFrame, width, height)
-                        .ContinueWith(t =>
-                        {
-                            if (t.Status == TaskStatus.RanToCompletion)
-                            {
-                                lock (frameDiffs)
-                                {
-                                    frameDiffs.Add(t.Result);
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Error: {t.Exception?.Flatten().Message}");
-                                lock (frameDiffs)
-                                {
-                                    frameDiffs.Add(double.MaxValue); // Add a high difference for failed frames
-                                }
-                            }
+                var timestamp = i / frameRate;
+                var argument = $"-i \"{tsFilePath}\" -ss {timestamp.ToString(CultureInfo.InvariantCulture)} -frames:v 1 -f rawvideo -";
+                var task = RunFFmpegAsync(ffmpegPath, argument, firstYUVFrame, frameDiffs, i);
+                ffmpegTasks.Add(task);
+            }
+            await Task.WhenAll(ffmpegTasks);     
 
-                            semaphore.Release();
-                        });
-                    ffmpegTasks.Add(task);
-                }
-                await Task.WhenAll(ffmpegTasks); 
-            }        
-            
-  
-            // var differences = await Task.WhenAll(ffmpegTasks);
-            // frameDiffs.AddRange(differences);
-
-
-            // for (int i = 1; i <= 511; i++)
-            // {
-            //     TimeSpan timeSpan = TimeSpan.FromSeconds(Convert.ToInt32(stopwatch.Elapsed.TotalSeconds));
-            //     Console.Write(timeSpan.ToString("c"));
-            //     Console.Write('\r');
-                
-            //     var tsFrame = DecodeTsFrame(tsFilePath, width, height, frameRate, i);
-
-            //     if (firstYUVFrame.Length != tsFrame.Length)
-            //     {
-            //         tsFrame = ResizeFrame(tsFrame, width, height);
-            //     }
-
-            //     double difference = CalculateFrameDifference(firstYUVFrame, tsFrame);
-            //     frameDiffs.Add(difference);
-            // }
             Console.WriteLine("\n");
-            Console.WriteLine($"Frame offset to sync: {frameDiffs.IndexOf(frameDiffs.Min())}");
+            Console.WriteLine($"Frame offset to sync: {frameDiffs.FirstOrDefault(i => i.Value == frameDiffs.Values.Min()).Key}");           
         }
 
         private static byte[] ReadYUVFrame(string filePath, int frameWidth, int frameHeight, int frameNumber)
@@ -97,8 +55,9 @@ namespace SomeNameSpace
 
             return frameData;
         }
-        private static async Task<double> RunFFmpegAsync(string ffmpegPath, string arguments, byte[] referenceFrame, int width, int height)
+        private static async Task RunFFmpegAsync(string ffmpegPath, string arguments, byte[] referenceFrame, Dictionary<int,double> framDiff, int counter)
         {
+            await semaphore.WaitAsync();
             try
             {
                 using (var ffmpegProcess = new System.Diagnostics.Process())
@@ -124,15 +83,14 @@ namespace SomeNameSpace
                             var error = await ffmpegProcess.StandardError.ReadToEndAsync();
                             Console.WriteLine($"FFmpeg failed with error: {error}");
                         }
-
-                        return CalculateFrameDifference(referenceFrame, memoryStream.ToArray());
+                        framDiff.Add(counter,CalculateFrameDifference(referenceFrame, memoryStream.ToArray()));
                     }
                 }
+                semaphore.Release();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error during FFmpeg execution: {ex.Message}");
-                return double.MaxValue;
             }
         }
         private static byte[] DecodeTsFrame(string tsFilePath, int width, int height, double frameRate, int frameIndex = 0)
